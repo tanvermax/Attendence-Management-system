@@ -7,6 +7,7 @@ import { FaUsersViewfinder } from 'react-icons/fa6';
 import { MdChecklist } from 'react-icons/md';
 import { SiGoogleclassroom } from 'react-icons/si';
 import { TbFileReport } from 'react-icons/tb';
+import { useAuth } from '../../PrivetRoute/AuthContext';
 
 const links = [
     { to: '/', label: 'Dashboard', icon: <AiOutlineDashboard /> },
@@ -21,12 +22,19 @@ const links = [
     { to: '/attendance-report', label: 'Attendance Report', icon: <TbFileReport /> },
     { to: '/users', label: 'User', icon: <FaUsersCog /> },
 ];
+const stufflink = [
+    { to: '/check-attendance', label: 'Check Attendance', icon: <FaCalendarCheck /> },
+    { to: '/attendance-record', label: 'Attendance Record', icon: <MdChecklist /> },
+    { to: '/attendance-report', label: 'Attendance Report', icon: <TbFileReport /> },
+];
 
 const AdminDashboard = () => {
+    const { user } = useAuth();
+
     return (
         <div className=' bg-gray-300  w-full'>
             {links.map(({ to, label, icon }) => (
-                <NavLink
+                user.role === "admin" ? <NavLink
                     key={to}
                     to={to}
                     className={({ isActive }) =>
@@ -34,7 +42,18 @@ const AdminDashboard = () => {
                     }
                 >
                     {icon} {label}
-                </NavLink>
+                </NavLink> : ""
+            ))}
+            {stufflink.map(({ to, label, icon }) => (
+                user.role === "staff" ? <NavLink
+                    key={to}
+                    to={to}
+                    className={({ isActive }) =>
+                        `flex items-center gap-2 text-[14px] py-2 px-4 w-full ${isActive ? 'bg-gray-700 text-white ' : 'hover:bg-blue-200'}`
+                    }
+                >
+                    {icon} {label}
+                </NavLink> : ""
             ))}
         </div>
     );

@@ -1,5 +1,7 @@
+import axios from 'axios';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
 
 const CourseForm = () => {
   const {
@@ -11,6 +13,15 @@ const CourseForm = () => {
 
   const onSubmit = (data) => {
     console.log("Course Data:", data);
+
+    axios.post("http://localhost:5000/course",data)
+     .then(response => {
+    console.log(response.data);
+    toast.success("course data added successfully")
+  })
+  .catch(error => {
+    console.error('Error fetching course:', error);
+  });
     // You can send data to backend here
     reset();
   };

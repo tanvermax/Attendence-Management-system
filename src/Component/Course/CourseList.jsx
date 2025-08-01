@@ -1,14 +1,15 @@
+
+import axios from 'axios';
 import React, { useState } from 'react';
+import { toast } from 'react-toastify';
 
-const initialCourses = [
-  { id: 1, subject: 'Mathematics', description: 'Algebra and Geometry' },
-  { id: 2, subject: 'Physics', description: 'Mechanics and Optics' },
-  { id: 3, subject: 'Chemistry', description: 'Organic and Inorganic' },
-];
 
-export default function CourseList() {
-  const [courses, setCourses] = useState(initialCourses);
+
+export default function CourseList({ courses, setCourses }) {
   const [searchTerm, setSearchTerm] = useState('');
+
+
+
 
   // Filter courses based on searchTerm
   const filteredCourses = courses.filter(course =>
@@ -17,12 +18,23 @@ export default function CourseList() {
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this course?')) {
-      setCourses(courses.filter(course => course.id !== id));
+      console.log(id)
+      axios.delete(`http://localhost:5000/course/${id}`)
+        .then(response => {
+          console.log(response.data);
+          if (response.data.message) {
+            toast.warning(response.data.message)
+          }
+        })
+
+      setCourses(courses.filter(course => course._id !== id));
     }
   };
 
   const handleEdit = (id) => {
     alert(`Edit course with id: ${id}`);
+
+
     // Here you can open a modal or navigate to edit form
   };
 
@@ -70,20 +82,20 @@ export default function CourseList() {
               </td>
             </tr>
           ) : (
-            filteredCourses.map(({ id, subject, description }) => (
-              <tr key={id} className="hover:bg-gray-50">
-                <td className="border px-4 py-2">{id}</td>
+            filteredCourses.map(({ _id, subject, description }, index) => (
+              <tr key={_id} className="hover:bg-gray-50">
+                <td className="border px-4 py-2">{index + 1}</td>
                 <td className="border px-4 py-2">{subject}</td>
                 <td className="border px-4 py-2">{description}</td>
                 <td className="border px-4 py-2 text-center space-x-2">
                   <button
-                    onClick={() => handleEdit(id)}
+                    onClick={() => handleEdit(_id)}
                     className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(id)}
+                    onClick={() => handleDelete(_id)}
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                   >
                     Delete

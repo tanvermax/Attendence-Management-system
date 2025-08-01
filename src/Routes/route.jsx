@@ -11,6 +11,10 @@ import ClassPerSubject from "../Component/ClassPerSubject/ClassPerSubject";
 import CheckAttendance from "../Component/CheckAttendance/CheckAttendance";
 import AttendanceRecord from "../Component/AttendanceRecord/AttendanceRecord";
 import AttendanceReport from "../Component/AttendanceReport/AttendanceReport";
+import Login from "../Component/Auth/Login/Login";
+import Ragistration from "../Component/Auth/Registration/Ragistration";
+import PrivetRoute from "../PrivetRoute/PrivetRoute";
+import User from "../Component/User/User";
 
 
 
@@ -18,7 +22,7 @@ const router = createBrowserRouter([
 
     {
         path: "/",
-        element: <MainlayoutAdmin />,
+        element: <PrivetRoute><MainlayoutAdmin /></PrivetRoute>,
         children: [
             {
                 path: "/",
@@ -64,10 +68,23 @@ const router = createBrowserRouter([
                     {
                         path: "/attendance-report",
                         element: <AttendanceReport />
+                    },
+                    {
+                        path: "/users",
+                        element: <User />
                     }
                 ]
-            }
+            },
+
         ]
+    },
+    {
+        path: "/login",
+        element: <Login />
+    },
+    {
+        path: "/registration",
+        element: <Ragistration />
     }
 ])
 
