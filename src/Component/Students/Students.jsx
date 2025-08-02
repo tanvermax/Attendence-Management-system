@@ -3,11 +3,26 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function Students() {
-  // const [students, setStudents] = useState([
-  //   { id: 'S101', name: 'Tanveer Mahidi', subject: 'CSE', year: '1' },
-  //   { id: 'S102', name: 'Rafiul Islam', subject: 'BBA', year: '2' },
-  // ]);
   const [student, setStudent] = useState([]);
+
+  const [classs, setClasss] = useState([]);
+
+  const fethCourse3 = async () => {
+    try {
+      axios.get("http://localhost:5000/class")
+        .then(response => {
+          console.log(response.data);
+          setClasss(response.data);
+
+        })
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  }
+
+  useEffect(() => {
+    fethCourse3();
+  }, []);
 
   const fethCourse = async () => {
     try {
@@ -90,7 +105,7 @@ export default function Students() {
         className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
         onClick={() => {
           setFormOpen(!formOpen);
-          setFormData({ id: '', name: '', subject: '', year: '' });
+          setFormData({ id: '', name: '', class: '' });
           setEditingId(null);
         }}
       >
@@ -118,24 +133,27 @@ export default function Students() {
               className="w-1/3 px-3 py-2 border rounded"
               required
             />
-            <input
-              type="text"
-              name="subject"
-              placeholder="Class (e.g., CSE, BBA)"
-              value={formData.subject}
-              onChange={handleInput}
-              className="w-1/3 px-3 py-2 border rounded"
-              required
-            />
-            <input
-              type="number"
-              name="year"
-              placeholder="Year"
-              value={formData.year}
-              onChange={handleInput}
-              className="w-1/4 px-3 py-2 border rounded"
-              required
-            />
+            <div className="mb-4 w-1/3">
+              <label className="block mb-1 text-xs font-medium">Subject</label>
+              <select
+                name="class"
+                value={formData.class}
+                onChange={handleInput}
+                className="block w-full border p-2 rounded text-sm"
+                required
+              >
+                <option value="">Select a class</option>
+                {classs.map((course, index) => (
+                  <option
+                    key={index}
+                    value={`${course.subject}-${course.year}-${course.semester}`}
+                  >
+                    {`${course.subject} - Year ${course.year} - Semester ${course.semester}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
           </div>
           <button
             type="submit"
@@ -153,7 +171,6 @@ export default function Students() {
             <th className="p-2">ID</th>
             <th className="p-2">Name</th>
             <th className="p-2">Class</th>
-            <th className="p-2">Year</th>
             <th className="p-2">Actions</th>
           </tr>
         </thead>
@@ -163,8 +180,7 @@ export default function Students() {
               <td className="p-2">{index + 1}</td>
               <td className="p-2">{stu.sid}</td>
               <td className="p-2">{stu.name}</td>
-              <td className="p-2">{stu.subject}</td>
-              <td className="p-2">{stu.year}</td>
+              <td className="p-2">{stu.class}</td>
               <td className="p-2 space-x-2">
                 <button
                   onClick={() => handleEdit(stu)}

@@ -83,6 +83,7 @@ const handleAdd = async (e) => {
     const response = await axios.post("http://localhost:5000/new-classpersubject", formData);
     console.log('Class added:', response.data);
     setData(prev => [...prev, response.data]);
+    toast.success("submited class data")
     setIsFormVisible(false);
     setFormData({ class: '', subject: '', faculty: '' });
   } catch (error) {

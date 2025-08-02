@@ -1,39 +1,66 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
+
+
+
+
 
 export default function CheckAttendance() {
-  // Sample class-subject entries
-  const classSubjectList = [
-    { id: 1, label: 'BBA 1st Year - Marketing Basics' },
-    { id: 2, label: 'BBA 1st Year - Business Math' },
-    { id: 3, label: 'BBA 2nd Year - Financial Accounting' },
-  ];
-
-  // Sample students grouped by class ID
-  const studentData = {
-    1: [
-      { id: 101, name: 'Tanvir Rahman' },
-      { id: 102, name: 'Shakib Hasan' },
-    ],
-    2: [
-      { id: 201, name: 'Mim Akter' },
-      { id: 202, name: 'Farhan Islam' },
-    ],
-    3: [
-      { id: 301, name: 'Anika Chowdhury' },
-    ]
-  };
 
   const [selectedClassId, setSelectedClassId] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [attendance, setAttendance] = useState({}); // { studentId: 'Present' | 'Absent' | 'Late' }
 
+  const [classpersubList, setClasspersubList] = useState([]);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fethClasspersub = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/check-atttendence");
+      console.log("response", response.data);
+
+      // Check what comes from backend — ideally an array of classpersub
+      const classpersubArray = response.data.data.classpersub; // MUST be an array
+      const studentsArray = response.data.data.student;
+
+      setClasspersubList(classpersubArray);
+      setData(studentsArray);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  useEffect(() => {
+    fethClasspersub();
+  }, []);
+
+  console.log("data", data)
+  if (loading) {
+    return (<><p>loading....</p></>)
+  }
+
+  // console.log(classpersub)
+  console.log(data)
+
+
   const handleAttendanceChange = (studentId, status) => {
     setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit =async (e) => {
     e.preventDefault();
     console.log('Attendance saved:', { date: selectedDate, classId: selectedClassId, attendance });
+    try {
+    const response = await axios.post("http://localhost:5000/attendance",{ date: selectedDate, classId: selectedClassId, attendance })
+    console.log('Attendance added:', response.data);
+  } catch (error) {
+    console.error("Error submitting Attendance data:", error);
+  }
     alert('Attendance submitted successfully!');
   };
 
@@ -51,10 +78,13 @@ export default function CheckAttendance() {
             required
           >
             <option value="">-- Select --</option>
-            {classSubjectList.map(cls => (
-              <option key={cls.id} value={cls.id}>{cls.label}</option>
+            {classpersubList.map(cls => (
+              <option key={cls._id} value={cls._id}>
+                {cls.class} - {cls.subject} ({cls.faculty})
+              </option>
             ))}
           </select>
+
         </div>
 
         <div>
@@ -80,27 +110,32 @@ export default function CheckAttendance() {
                 </tr>
               </thead>
               <tbody>
-                {(studentData[selectedClassId] || []).map(student => (
-                  <tr key={student.id}>
-                    <td className="border p-2">{student.id}</td>
-                    <td className="border p-2">{student.name}</td>
-                    <td className="border p-2">
-                      <select
-                        value={attendance[student.id] || ''}
-                        onChange={(e) => handleAttendanceChange(student.id, e.target.value)}
-                        className="border p-1 rounded"
-                        required
-                      >
-                        
-                        <option value="">-- Select --</option>
-                        <option value="Present">Present</option>
-                        <option value="Absent">Absent</option>
-                        <option value="Late">Late</option>
-                      </select>
-                      
-                    </td>
-                  </tr>
-                ))}
+
+
+                {data
+                  // .filter(student => student.classpersubId === selectedClassId)
+                  .map(student => (
+                    <tr key={student._id}>
+                      <td className="border p-2">{student.sid}</td>
+                      <td className="border p-2">{student.name}</td>
+                      <td className="border p-2">
+                        <select
+                          value={attendance[student._id] || ''}
+                          onChange={(e) => handleAttendanceChange(student._id, e.target.value)}
+                          className="border p-1 rounded"
+                          required
+                        >
+                          <option value="">-- Select --</option>
+                          <option value="Present">Present</option>
+                          <option value="Absent">Absent</option>
+                          <option value="Late">Late</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+
+
+
               </tbody>
             </table>
           </div>

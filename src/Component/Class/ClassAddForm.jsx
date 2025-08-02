@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const ClassAddForm = ({setClass}) => {
+const ClassAddForm = ({ setClass }) => {
+
+  const [data, setData] = useState([]);
+
+
   const {
     register,
     handleSubmit,
@@ -16,7 +20,7 @@ const ClassAddForm = ({setClass}) => {
       const response = await axios.post('http://localhost:5000/class', data);
       console.log('Class added:', response.data);
       setClass(prev => [...prev, response.data]);
-      
+
       toast.success('Class added successfully!');
 
       reset();
@@ -25,6 +29,22 @@ const ClassAddForm = ({setClass}) => {
       toast.error('Failed to add class');
     }
   };
+
+  const fethCourse = async () => {
+    try {
+      axios.get("http://localhost:5000/course")
+        .then(response => {
+          console.log(response.data);
+          setData(response.data)
+        })
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  }
+
+  useEffect(() => {
+    fethCourse();
+  }, []);
 
   const handleCancel = () => {
     reset();
@@ -37,12 +57,18 @@ const ClassAddForm = ({setClass}) => {
         {/* Subject */}
         <div className="mb-4">
           <label className="block mb-1 text-xs font-medium">Subject</label>
-          <input
-            type="text"
+          <select
             {...register('subject', { required: 'Subject is required' })}
-            placeholder="e.g. CSE, BBA"
-            className="w-full border text-xs border-gray-300 px-3 py-2 rounded"
-          />
+            className="block w-full border p-2 rounded text-sm"
+            defaultValue=""
+          >
+            <option disabled value="">Select a Course</option>
+            {data.map((course, index) => (
+              <option key={index} value={course.subject}>
+                {course.subject}
+              </option>
+            ))}
+          </select>
           {errors.subject && (
             <p className="text-red-500 text-sm">{errors.subject.message}</p>
           )}

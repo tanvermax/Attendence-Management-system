@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 
-const SubjectFrom = () => {
+const SubjectFrom = ({setSubject}) => {
   const {
     register,
     handleSubmit,
@@ -15,7 +15,9 @@ const SubjectFrom = () => {
     try {
       const response = await axios.post('http://localhost:5000/subject', data);
       console.log('subject added:', response.data);
+      setSubject(prev=>[...prev,response.data])
       toast.success('subject added successfully!');
+
       reset();
     } catch (error) {
       console.error('Error adding subject:', error);

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import React, {  useState } from 'react';
 import { toast } from 'react-toastify';
 
 // const initialSubjects = [
@@ -9,27 +9,10 @@ import { toast } from 'react-toastify';
 //   { id: 4, name: 'Biology' },
 // ];
 
-export default function SubjectList() {
+export default function SubjectList({subject,setSubject}) {
   // const [subjects, setSubjects] = useState(initialSubjects);
   const [searchTerm, setSearchTerm] = useState('');
-  const [subject, setSubject] = useState([]);
-
-  const fethCourse = async () => {
-    try {
-      axios.get("http://localhost:5000/subject")
-        .then(response => {
-          console.log(response.data);
-          setSubject(response.data);
-
-        })
-    } catch (error) {
-      console.error('Error fetching subject:', error);
-    }
-  }
-
-  useEffect(() => {
-    fethCourse();
-  }, []);
+ 
   // Filter subjects by search term
   const filteredSubjects = subject.filter(subject =>
     subject.subject.toLowerCase().includes(searchTerm.toLowerCase())

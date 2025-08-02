@@ -3,7 +3,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 
-const CourseForm = () => {
+const CourseForm = ({setCourses}) => {
   const {
     register,
     handleSubmit,
@@ -17,6 +17,8 @@ const CourseForm = () => {
     axios.post("http://localhost:5000/course",data)
      .then(response => {
     console.log(response.data);
+
+    setCourses(prev=>[...prev,response.data])
     toast.success("course data added successfully")
   })
   .catch(error => {

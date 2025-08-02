@@ -31,8 +31,8 @@ export default function Course() {
 
   return (
     <div className='flex justify-around p-5'>
-        <CourseForm onAddClass={handleAddClass}/>
-        <CourseList courses={courses}setCourses={setCourses}/>
+        <CourseForm onAddClass={handleAddClass} setCourses={setCourses}/>
+        <CourseList courses={courses} setCourses={setCourses}/>
     </div>
   )
 }
