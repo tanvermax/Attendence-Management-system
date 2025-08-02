@@ -1,4 +1,6 @@
+import axios from 'axios';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
 
 const SubjectFrom = () => {
   const {
@@ -8,13 +10,23 @@ const SubjectFrom = () => {
     reset,
   } = useForm();
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log("Subject Data:", data);
+    try {
+      const response = await axios.post('http://localhost:5000/subject', data);
+      console.log('subject added:', response.data);
+      toast.success('subject added successfully!');
+      reset();
+    } catch (error) {
+      console.error('Error adding subject:', error);
+      toast.error('Failed to add subject');
+    }
+
     // You can send data to backend here
     reset();
   };
 
-  const handlecancle=()=>{
+  const handlecancle = () => {
     reset();
 
   }
@@ -47,20 +59,20 @@ const SubjectFrom = () => {
           {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
         </div>
 
-       <div className='flex justify-between'>
-         <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Submit
-        </button>
-        <button
-         onClick={handlecancle} type="button"
-          className="bg-red-400 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Cancel
-        </button>
-       </div>
+        <div className='flex justify-between'>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Submit
+          </button>
+          <button
+            onClick={handlecancle} type="button"
+            className="bg-red-400 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Cancel
+          </button>
+        </div>
 
       </form>
     </div>

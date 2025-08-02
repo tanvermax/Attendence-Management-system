@@ -1,24 +1,56 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 
-const initialSubjects = [
-  { id: 1, name: 'Mathematics' },
-  { id: 2, name: 'Physics' },
-  { id: 3, name: 'Chemistry' },
-  { id: 4, name: 'Biology' },
-];
+// const initialSubjects = [
+//   { id: 1, name: '' },
+//   { id: 2, name: 'Physics' },
+//   { id: 3, name: 'Chemistry' },
+//   { id: 4, name: 'Biology' },
+// ];
 
 export default function SubjectList() {
-  const [subjects, setSubjects] = useState(initialSubjects);
+  // const [subjects, setSubjects] = useState(initialSubjects);
   const [searchTerm, setSearchTerm] = useState('');
+  const [subject, setSubject] = useState([]);
 
+  const fethCourse = async () => {
+    try {
+      axios.get("http://localhost:5000/subject")
+        .then(response => {
+          console.log(response.data);
+          setSubject(response.data);
+
+        })
+    } catch (error) {
+      console.error('Error fetching subject:', error);
+    }
+  }
+
+  useEffect(() => {
+    fethCourse();
+  }, []);
   // Filter subjects by search term
-  const filteredSubjects = subjects.filter(subject =>
-    subject.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSubjects = subject.filter(subject =>
+    subject.subject.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this subject?')) {
-      setSubjects(subjects.filter(subject => subject.id !== id));
+      console.log(id)
+       axios.delete(`http://localhost:5000/subject/${id}`)
+      .then(response => {
+               console.log(response.data);
+               if (response.data.message) {
+                 toast.warning(response.data.message)
+               }
+             })
+              .catch(err => {
+        console.error('Delete error:', err);
+        toast.error("Failed to delete subject.");
+      });
+      setSubject(subject.filter(subject => subject._id !== id));
     }
   };
 
@@ -70,20 +102,25 @@ export default function SubjectList() {
               </td>
             </tr>
           ) : (
-            filteredSubjects.map(({ id, name }) => (
-              <tr key={id} className="hover:bg-gray-50">
-                <td className="border px-4 py-2">{id}</td>
+            filteredSubjects.map(({ _id, subject,description },index) => (
+              <tr key={_id} className="hover:bg-gray-50">
+                <td className="border px-4 py-2">{index+1}</td>
 
-                <td className="border px-4 py-2">{name}</td>
+                <td className="border px-4 py-2">
+                  <p>
+                    {subject}
+                  </p>
+                  <p className='text-[10px]'>{description}</p>
+                </td>
                 <td className="border px-4 py-2 text-center space-x-2">
                   <button
-                    onClick={() => handleEdit(id)}
+                    onClick={() => handleEdit(_id)}
                     className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(id)}
+                    onClick={() => handleDelete(_id)}
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                   >
                     Delete

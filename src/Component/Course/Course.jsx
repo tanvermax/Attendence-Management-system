@@ -24,12 +24,14 @@ export default function Course() {
     fethCourse();
   }, []);
 
-
+ const handleAddClass = (newClass) => {
+    setCourses(prev => [...prev, newClass]);
+  };
 
 
   return (
     <div className='flex justify-around p-5'>
-        <CourseForm/>
+        <CourseForm onAddClass={handleAddClass}/>
         <CourseList courses={courses}setCourses={setCourses}/>
     </div>
   )
