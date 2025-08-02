@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 
 export default function CheckAttendance() {
 
-  const [selectedClassId, setSelectedClassId] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [attendance, setAttendance] = useState({}); // { studentId: 'Present' | 'Absent' | 'Late' }
 
@@ -44,7 +44,7 @@ export default function CheckAttendance() {
     return (<><p>loading....</p></>)
   }
 
-  // console.log(classpersub)
+  console.log(classpersubList)
   console.log(data)
 
 
@@ -54,16 +54,18 @@ export default function CheckAttendance() {
 
   const handleSubmit =async (e) => {
     e.preventDefault();
-    console.log('Attendance saved:', { date: selectedDate, classId: selectedClassId, attendance });
+    console.log('Attendance saved:', { date: selectedDate, classId: selectedClass, attendance });
     try {
-    const response = await axios.post("http://localhost:5000/attendance",{ date: selectedDate, classId: selectedClassId, attendance })
+    const response = await axios.post("http://localhost:5000/attendance",{ date: selectedDate, classId: selectedClass, attendance })
     console.log('Attendance added:', response.data);
   } catch (error) {
     console.error("Error submitting Attendance data:", error);
   }
     alert('Attendance submitted successfully!');
   };
+console.log("selectedClassId",selectedClass
 
+)
   return (
     <div className="p-4 text-xs">
       <h2 className="text-xl font-semibold mb-4">Check Attendance</h2>
@@ -72,14 +74,14 @@ export default function CheckAttendance() {
         <div>
           <label className="block mb-1 font-medium">Select Class per Subject:</label>
           <select
-            value={selectedClassId}
-            onChange={(e) => setSelectedClassId(e.target.value)}
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
             className="w-full border p-2 rounded"
             required
           >
             <option value="">-- Select --</option>
             {classpersubList.map(cls => (
-              <option key={cls._id} value={cls._id}>
+              <option key={cls._id} value={`${cls.class}`}>
                 {cls.class} - {cls.subject} ({cls.faculty})
               </option>
             ))}
@@ -98,7 +100,7 @@ export default function CheckAttendance() {
           />
         </div>
 
-        {selectedClassId && (
+        {selectedClass && (
           <div className="mt-4">
             <h3 className="font-semibold mb-2">Student List</h3>
             <table className="w-full border text-left">
@@ -113,7 +115,7 @@ export default function CheckAttendance() {
 
 
                 {data
-                  // .filter(student => student.classpersubId === selectedClassId)
+                  .filter(student => student.class === selectedClass)
                   .map(student => (
                     <tr key={student._id}>
                       <td className="border p-2">{student.sid}</td>
@@ -141,7 +143,7 @@ export default function CheckAttendance() {
           </div>
         )}
 
-        {selectedClassId && (
+        {selectedClass && (
           <button
             type="submit"
             className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"

@@ -136,7 +136,7 @@ const handleAdd = async (e) => {
           >
             <option value=''>Select a Class</option>
             {classpersub.classes?.map((data, index) => (
-              <option key={index} value={`${data.subject}${data.year} ${data.semester}`}>
+              <option key={index} value={`${data.subject} ${ data.year}${data.semester}`}>
                 {data.subject} {data.year} {data.semester}
               </option>
             ))}
