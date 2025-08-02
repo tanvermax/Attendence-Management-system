@@ -1,13 +1,34 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 
 export default function Students() {
-  const [students, setStudents] = useState([
-    { id: 'S101', name: 'Tanveer Mahidi', subject: 'CSE', year: '1' },
-    { id: 'S102', name: 'Rafiul Islam', subject: 'BBA', year: '2' },
-  ]);
+  // const [students, setStudents] = useState([
+  //   { id: 'S101', name: 'Tanveer Mahidi', subject: 'CSE', year: '1' },
+  //   { id: 'S102', name: 'Rafiul Islam', subject: 'BBA', year: '2' },
+  // ]);
+  const [student, setStudent] = useState([]);
+
+  const fethCourse = async () => {
+    try {
+      axios.get("http://localhost:5000/student")
+        .then(response => {
+          console.log(response.data);
+          setStudent(response.data);
+
+        })
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  }
+
+  useEffect(() => {
+    fethCourse();
+  }, []);
+
 
   const [formOpen, setFormOpen] = useState(false);
-  const [formData, setFormData] = useState({ id: '', name: '', subject: '', year: '' });
+  const [formData, setFormData] = useState({ sid: '', name: '', subject: '', year: '' });
   const [editingId, setEditingId] = useState(null);
 
   const handleInput = (e) => {
@@ -15,22 +36,26 @@ export default function Students() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log(formData);
 
-    if (editingId) {
-      // Update student
-      setStudents(prev =>
-        prev.map(s => (s.id === editingId ? formData : s))
-      );
-      setEditingId(null);
-    } else {
-      // Add new student
-      setStudents(prev => [...prev, formData]);
+    try {
+      const response = await axios.post('http://localhost:5000/student', formData);
+
+      console.log('Student added:', response.data);
+      toast.success('Student added successfully!');
+
+      // 👇 Add the newly added student to state
+      setStudent(prev => [...prev, response.data]);
+
+      // Clear form and close
+      // setFormData({ sid: '', name: '', subject: '', year: '' });
+      // setFormOpen(false);
+    } catch (error) {
+      console.error('Error adding student:', error);
+      toast.error('Failed to add student');
     }
-
-    setFormData({ id: '', name: '', subject: '', year: '' });
-    setFormOpen(false);
   };
 
   const handleEdit = (student) => {
@@ -41,7 +66,19 @@ export default function Students() {
 
   const handleDelete = (id) => {
     if (confirm("Are you sure to delete?")) {
-      setStudents(prev => prev.filter(s => s.id !== id));
+      axios.delete(`http://localhost:5000/student/${id}`)
+        .then(response => {
+          console.log(response.data);
+          if (response.data.message) {
+            toast.warning(response.data.message)
+          }
+        })
+        .catch(err => {
+          console.error('Delete error:', err);
+          toast.error("Failed to delete student class.");
+        });
+
+      setStudent(prev => prev.filter(s => s._id !== id));
     }
   };
 
@@ -65,9 +102,9 @@ export default function Students() {
           <div className="flex gap-4">
             <input
               type="text"
-              name="id"
+              name="sid"
               placeholder="Student ID"
-              value={formData.id}
+              value={formData.sid}
               onChange={handleInput}
               className="w-1/3 px-3 py-2 border rounded"
               required
@@ -121,10 +158,10 @@ export default function Students() {
           </tr>
         </thead>
         <tbody>
-          {students.map((stu,index) => (
-            <tr key={stu.id} className="border-t hover:bg-gray-50">
-              <td className="p-2">{index+1}</td>
-              <td className="p-2">{stu.id}</td>
+          {student.map((stu, index) => (
+            <tr key={stu._id} className="border-t hover:bg-gray-50">
+              <td className="p-2">{index + 1}</td>
+              <td className="p-2">{stu.sid}</td>
               <td className="p-2">{stu.name}</td>
               <td className="p-2">{stu.subject}</td>
               <td className="p-2">{stu.year}</td>
@@ -136,7 +173,7 @@ export default function Students() {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(stu.id)}
+                  onClick={() => handleDelete(stu._id)}
                   className="bg-red-500 text-white px-3 py-1 rounded"
                 >
                   Delete
@@ -144,7 +181,7 @@ export default function Students() {
               </td>
             </tr>
           ))}
-          {students.length === 0 && (
+          {student.length === 0 && (
             <tr>
               <td colSpan="5" className="text-center text-gray-500 p-4">
                 No students available.

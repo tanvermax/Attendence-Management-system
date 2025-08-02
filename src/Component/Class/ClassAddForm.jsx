@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const ClassAddForm = () => {
+const ClassAddForm = ({setClass}) => {
   const {
     register,
     handleSubmit,
@@ -15,7 +15,10 @@ const ClassAddForm = () => {
     try {
       const response = await axios.post('http://localhost:5000/class', data);
       console.log('Class added:', response.data);
+      setClass(prev => [...prev, response.data]);
+      
       toast.success('Class added successfully!');
+
       reset();
     } catch (error) {
       console.error('Error adding class:', error);

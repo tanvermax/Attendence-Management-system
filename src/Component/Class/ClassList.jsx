@@ -2,15 +2,6 @@ import axios from 'axios';
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 
-// Helper to convert number to ordinal string (1 → 1st, 2 → 2nd, etc.)
-const toOrdinal = (num) => {
-  const j = num % 10,
-    k = num % 100;
-  if (j === 1 && k !== 11) return num + "st";
-  if (j === 2 && k !== 12) return num + "nd";
-  if (j === 3 && k !== 13) return num + "rd";
-  return num + "th";
-};
 
 export default function ClassList({ classes, setClass }) {
   // const [classes, setClasses] = useState(fakeClasses);
@@ -67,7 +58,7 @@ export default function ClassList({ classes, setClass }) {
               className="flex items-center justify-between border rounded px-4 py-3 hover:bg-gray-50"
             >
               <span className="text-xs font-medium">
-                {subject} {toOrdinal(year)} Year {toOrdinal(semester)} Semester
+                {subject} {year}  {semester} 
               </span>
               <div className="space-x-2">
                 <button

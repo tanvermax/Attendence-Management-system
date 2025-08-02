@@ -28,7 +28,7 @@ export default function Class() {
   };
   return (
     <div className='flex justify-around p-5'>
-        <ClassAddForm onAddClass={handleAddClass}/>
+        <ClassAddForm onAddClass={handleAddClass} setClass={setClass}/>
         <ClassList classes={classssss} setClass={setClass}/>
     </div>
   )

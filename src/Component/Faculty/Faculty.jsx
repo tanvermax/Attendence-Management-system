@@ -1,22 +1,24 @@
-import  { useState } from 'react';
+import axios from 'axios';
+import  { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 
 export default function Faculty() {
-  const [faculties, setFaculties] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      contact: '01234567890',
-      address: 'Dhaka, Bangladesh',
-    },
-    {
-      id: 2,
-      name: 'John Doe',
-      email: 'john@example.com',
-      contact: '01234567890',
-      address: 'Dhaka, Bangladesh',
-    },
-  ]);
+  // const [faculties, setFaculties] = useState([
+  //   {
+  //     id: 1,
+  //     name: 'John Doe',
+  //     email: 'john@example.com',
+  //     contact: '01234567890',
+  //     address: 'Dhaka, Bangladesh',
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'John Doe',
+  //     email: 'john@example.com',
+  //     contact: '01234567890',
+  //     address: 'Dhaka, Bangladesh',
+  //   },
+  // ]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -24,6 +26,24 @@ export default function Faculty() {
     contact: '',
     address: '',
   });
+   const [faculty,setfaculty] = useState([]);
+
+  const fethCourse = async () => {
+    try {
+      axios.get("http://localhost:5000/faculty")
+        .then(response => {
+          console.log(response.data);
+          setfaculty(response.data);
+
+        })
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  }
+
+  useEffect(() => {
+    fethCourse();
+  }, []);
 
   const [isFormVisible, setIsFormVisible] = useState(false);
 
@@ -32,20 +52,40 @@ export default function Faculty() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddFaculty = (e) => {
+  const handleAddFaculty =async (e) => {
     e.preventDefault();
-    const newFaculty = {
-      id: faculties.length + 1,
-      ...formData,
-    };
-    setFaculties(prev => [...prev, newFaculty]);
     setFormData({ name: '', email: '', contact: '', address: '' });
+    console.log(formData)
+    try {
+      const response = await axios.post('http://localhost:5000/faculty', formData);
+
+      console.log('Class added:', response.data);
+      setfaculty(prev => [...prev, response.data]);
+
+      toast.success('Class added successfully!');
+    } catch (error) {
+      console.error('Error adding class:', error);
+      toast.error('Failed to add class');
+    }
     setIsFormVisible(false);
   };
 
   const handleDelete = (id) => {
-    const updated = faculties.filter(faculty => faculty.id !== id);
-    setFaculties(updated);
+console.log(id)
+     axios.delete(`http://localhost:5000/faculty/${id}`)
+        .then(response => {
+          console.log(response.data);
+          if (response.data.message) {
+            toast.warning(response.data.message)
+          }
+        })
+        .catch(err => {
+          console.error('Delete error:', err);
+          toast.error("Failed to delfacultyete class.");
+        });
+    const updated = faculty.filter(faculty => faculty._id !== id);
+
+    setfaculty(updated);
   };
 
   return (
@@ -117,9 +157,9 @@ export default function Faculty() {
           </tr>
         </thead>
         <tbody>
-          {faculties.map((faculty) => (
-            <tr key={faculty.id}>
-              <td className='border p-2'>{faculty.id}</td>
+          {faculty.map((faculty,index) => (
+            <tr key={faculty._id}>
+              <td className='border p-2'>{index+1}</td>
               <td className='border p-2'>{faculty.name}</td>
               <td className='border p-2'>{faculty.email}</td>
               <td className='border p-2'>{faculty.contact}</td>
@@ -129,7 +169,7 @@ export default function Faculty() {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(faculty.id)}
+                  onClick={() => handleDelete(faculty._id)}
                   className='bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600'
                 >
                   Delete
