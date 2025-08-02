@@ -1,18 +1,57 @@
-import React, { useState } from 'react';
-
-const dummyData = [
-    { id: 1, name: 'Shorna Akter', attendance: 'Present' },
-    { id: 2, name: 'Ariful Islam', attendance: 'Present' },
-    { id: 3, name: 'Rahim Uddin', attendance: 'Late' },
-    { id: 4, name: 'Selina Parvin', attendance: 'Absent' },
-];
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 export default function AttendanceRecord() {
     const [selectedClass, setSelectedClass] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
     const [showData, setShowData] = useState(false);
 
+    const [attendanceData, setAttendanceData] = useState([]);
+    const [studentData, setStudentData] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
+
+
+    useEffect(() => {
+        // Fetch data from your backend
+        axios.get("http://localhost:5000/attendance")
+            .then(res => {
+                setAttendanceData(res.data.attendance || []);
+                setStudentData(res.data.student || []);
+            })
+            .catch(err => console.error("Error fetching attendance:", err));
+    }, []);
+
+
     const handleCheck = () => {
+        if (!selectedClass || !selectedDate) return;
+
+        // Format the selected date in YYYY-MM-DD
+        const formattedDate = new Date(selectedDate).toISOString().split('T')[0];
+
+        const matchedRecord = attendanceData.find(
+            record =>
+                record.classname === selectedClass &&
+                record.date === formattedDate
+        );
+
+        if (!matchedRecord) {
+            setFilteredStudents([]);
+            setShowData(true);
+            return;
+        }
+
+        const attendanceMap = matchedRecord.attendance; // {studentId: "Present"}
+
+        const result = Object.entries(attendanceMap).map(([id, status]) => {
+            const student = studentData.find(s => s._id === id);
+            return {
+                id,
+                sid: student?.sid || 'Unknown ID',
+                name: student?.name || 'Unknown Name',
+                attendance: status
+            };
+        });
+        setFilteredStudents(result);
         setShowData(true);
     };
 
@@ -26,6 +65,7 @@ export default function AttendanceRecord() {
         printWindow.print();
     };
 
+
     return (
         <div className="p-6 bg-white text-xs rounded shadow-md">
             <h2 className="text-2xl font-bold mb-4">Attendance Records</h2>
@@ -36,9 +76,11 @@ export default function AttendanceRecord() {
                     value={selectedClass}
                     onChange={(e) => setSelectedClass(e.target.value)}
                 >
-                    <option value="">Select Class per Subject</option>
-                    <option value="CSE_BBA_1">CSE / BBA-1 / 1st year-1st semester</option>
-                    <option value="EEE_BBA_2">EEE / BBA-2 / 2nd year-2nd semester</option>
+                    <option value="">Select Class</option>
+                    {/* Dynamically populate class options from studentData */}
+                    {[...new Set(studentData.map(s => s.class))].map(cls => (
+                        <option key={cls} value={cls}>{cls}</option>
+                    ))}
                 </select>
 
                 <input
@@ -69,38 +111,45 @@ export default function AttendanceRecord() {
                     </div>
 
                     <div id="print-section" className="border p-4 rounded bg-gray-50">
-                       <div className='grid grid-cols-2'>
-                         <div >
-                            <p><strong>Course:</strong> CSE</p>
-                            <p><strong>Subject:</strong> BBA-1</p>
+                        <div className='grid grid-cols-2'>
+                            <div>
+                                <p><strong>Course:</strong> CSE</p>
+                                <p><strong>Subject:</strong> {selectedClass}</p>
+                            </div>
+                            <div>
+                                <p><strong>Class:</strong> {selectedClass}</p>
+                                <p><strong>Date of Class:</strong> {new Date(selectedDate).toLocaleDateString('en-US', { dateStyle: 'medium' })}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p><strong>Class:</strong> 1st year-1st semester</p>
-                        <p><strong>Date of Class:</strong> {new Date(selectedDate).toLocaleDateString('en-US', { dateStyle: 'medium' })}</p>
-                        </div>
-                       </div>
 
-                        <table className="w-full mt-4 border border-collapse">
-                            <thead>
-                                <tr className="bg-gray-200">
-                                    <th className="border px-3 py-2">#</th>
-                                    <th className="border px-3 py-2">Student</th>
-                                    <th className="border px-3 py-2">Attendance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {dummyData.map((student, index) => (
-                                    <tr key={student.id}>
-                                        <td className="border px-3 py-2">{index + 1}</td>
-                                        <td className="border px-3 py-2">{student.name}</td>
-                                        <td className="border px-3 py-2">{student.attendance}</td>
+                        {filteredStudents.length > 0 ? (
+                            <table className="w-full mt-4 border border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-200">
+                                        <th className="border px-3 py-2">#</th>
+                                        <th className="border px-3 py-2">Student</th>
+                                        <th className="border px-3 py-2">SID</th>
+                                        <th className="border px-3 py-2">Attendance</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {filteredStudents.map((student, index) => (
+                                        <tr key={student.id}>
+                                            <td className="border px-3 py-2">{index + 1}</td>
+                                            <td className="border px-3 py-2">{student.name}</td>
+                                            <td className="border px-3 py-2">{student.sid}</td>
+                                            <td className="border px-3 py-2">{student.attendance}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <p className="mt-4 text-red-600">No attendance data found for this class and date.</p>
+                        )}
                     </div>
                 </>
             )}
         </div>
     );
+
 }

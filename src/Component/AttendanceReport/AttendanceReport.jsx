@@ -1,125 +1,120 @@
-"use client";
-import React, { useState } from "react";
-import dayjs from "dayjs";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
-const AttendanceReport = () => {
-  const [selectedClassSubject, setSelectedClassSubject] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState(dayjs().format("YYYY-MM"));
-  const [showReport, setShowReport] = useState(false);
+export default function MonthlyAttendanceSummary() {
+    const [selectedClass, setSelectedClass] = useState('');
+    const [selectedMonth, setSelectedMonth] = useState(''); // Format: "2025-07"
+    const [attendanceData, setAttendanceData] = useState([]);
+    const [studentData, setStudentData] = useState([]);
+    const [summary, setSummary] = useState([]);
 
-  const mockClassSubjects = [
-    { id: "1", label: "CSE - BBA-1 - 1st Year 1st Semester" },
-    { id: "2", label: "EEE - BBA-2 - 1st Year 2nd Semester" },
-  ];
+    useEffect(() => {
+        axios.get("http://localhost:5000/attendance")
+            .then(res => {
+                setAttendanceData(res.data.attendance || []);
+                setStudentData(res.data.student || []);
+            })
+            .catch(err => console.error("Error fetching attendance:", err));
+    }, []);
 
-  const mockReportData = [
-    { id: 1, name: "Shorna Akter", present: 5, late: 0, absent: 5 },
-    { id: 2, name: "Ariful Islam", present: 8, late: 0, absent: 3 },
-  ];
+    const calculateSummary = () => {
+        if (!selectedClass || !selectedMonth) return;
 
-  const handleGenerateReport = () => {
-    if (selectedClassSubject && selectedMonth) {
-      setShowReport(true);
-    } else {
-      alert("Please select class and month");
-    }
-  };
+        // Filter attendance by selected class and month
+        const filteredRecords = attendanceData.filter(record => {
+            return (
+                record.classname === selectedClass &&
+                record.date.startsWith(selectedMonth) // e.g., "2025-07"
+            );
+        });
 
-  return (
-    <div className="max-w-4xl text-xs mx-auto p-4 bg-white rounded shadow">
-      <h1 className="text-xl font-bold mb-4">Monthly Attendance Report</h1>
+        // Get student list for that class
+        const students = studentData.filter(s => s.class === selectedClass);
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label className="font-medium">Class per Subject</label>
-          <select
-            value={selectedClassSubject}
-            onChange={(e) => setSelectedClassSubject(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          >
-            <option value="">Select</option>
-            {mockClassSubjects.map((cls) => (
-              <option key={cls.id} value={cls.id}>
-                {cls.label}
-              </option>
-            ))}
-          </select>
+        // Create summary per student
+        const studentSummary = students.map(student => {
+            let present = 0, absent = 0, late = 0;
+
+            filteredRecords.forEach(record => {
+                const status = record.attendance[student._id];
+                if (status === "Present") present++;
+                else if (status === "Absent") absent++;
+                else if (status === "Late") late++;
+            });
+
+            return {
+                id: student._id,
+                sid: student.sid,
+                name: student.name,
+                present,
+                absent,
+                late,
+                total: present + absent + late
+            };
+        });
+
+        setSummary(studentSummary);
+    };
+
+    return (
+        <div className="p-6 bg-white text-xs rounded shadow-md">
+            <h2 className="text-2xl font-bold mb-4">Monthly Attendance Summary</h2>
+
+            <div className="flex flex-wrap gap-4 mb-4">
+                <select
+                    className="border px-3 py-2 rounded"
+                    value={selectedClass}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                >
+                    <option value="">Select Class</option>
+                    {[...new Set(studentData.map(s => s.class))].map(cls => (
+                        <option key={cls} value={cls}>{cls}</option>
+                    ))}
+                </select>
+
+                <input
+                    type="month"
+                    className="border px-3 py-2 rounded"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                />
+
+                <button
+                    onClick={calculateSummary}
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                    Generate Summary
+                </button>
+            </div>
+
+            {summary.length > 0 && (
+                <table className="w-full mt-4 border border-collapse text-sm">
+                    <thead>
+                        <tr className="bg-gray-200">
+                            <th className="border px-2 py-1">#</th>
+                            <th className="border px-2 py-1">Student</th>
+                            <th className="border px-2 py-1">SID</th>
+                            <th className="border px-2 py-1">Present</th>
+                            <th className="border px-2 py-1">Absent</th>
+                            <th className="border px-2 py-1">Late</th>
+                            <th className="border px-2 py-1">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {summary.map((student, idx) => (
+                            <tr key={student.id}>
+                                <td className="border px-2 py-1">{idx + 1}</td>
+                                <td className="border px-2 py-1">{student.name}</td>
+                                <td className="border px-2 py-1">{student.sid}</td>
+                                <td className="border px-2 py-1">{student.present}</td>
+                                <td className="border px-2 py-1">{student.absent}</td>
+                                <td className="border px-2 py-1">{student.late}</td>
+                                <td className="border px-2 py-1">{student.total}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
-
-        <div>
-          <label className="font-medium">Select Month</label>
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="w-full border px-3 py-2 rounded"
-          />
-        </div>
-
-        <div className="flex items-end">
-          <button
-            onClick={handleGenerateReport}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Generate Report
-          </button>
-        </div>
-      </div>
-
-      {/* Report Section */}
-      {showReport && (
-        <div className="mt-6 border-t pt-4" id="print-section">
-          <h2 className="text-lg font-semibold mb-2">Course: CSE</h2>
-          <p>Subject: BBA-1</p>
-          <p>Class: 1st Year - 1st Semester</p>
-          <p>
-            Total Days of Classes: <strong>10</strong>
-          </p>
-          <p>
-            Month of:{" "}
-            <strong>
-              {dayjs(selectedMonth).format("MMMM , YYYY")}
-            </strong>
-          </p>
-
-          {/* Table */}
-          <table className="w-full mt-4 border border-gray-300">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border px-2 py-1 text-left">#</th>
-                <th className="border px-2 py-1 text-left">Student</th>
-                <th className="border px-2 py-1 text-left">Present</th>
-                <th className="border px-2 py-1 text-left">Late</th>
-                <th className="border px-2 py-1 text-left">Absent</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockReportData.map((student, i) => (
-                <tr key={student.id}>
-                  <td className="border px-2 py-1">{i + 1}</td>
-                  <td className="border px-2 py-1">{student.name}</td>
-                  <td className="border px-2 py-1">{student.present}</td>
-                  <td className="border px-2 py-1">{student.late}</td>
-                  <td className="border px-2 py-1">{student.absent}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Print Button */}
-          <div className="mt-4 no-print">
-            <button
-              onClick={() => window.print()}
-              className="bg-green-600 text-white px-4 py-2 rounded"
-            >
-              Print Report
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default AttendanceReport;
+    );
+}

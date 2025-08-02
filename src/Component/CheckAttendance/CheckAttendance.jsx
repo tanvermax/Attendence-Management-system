@@ -54,9 +54,9 @@ export default function CheckAttendance() {
 
   const handleSubmit =async (e) => {
     e.preventDefault();
-    console.log('Attendance saved:', { date: selectedDate, classId: selectedClass, attendance });
+    console.log('Attendance saved:', { date: selectedDate, classname: selectedClass, attendance });
     try {
-    const response = await axios.post("http://localhost:5000/attendance",{ date: selectedDate, classId: selectedClass, attendance })
+    const response = await axios.post("http://localhost:5000/attendance",{ date: selectedDate, classname: selectedClass, attendance })
     console.log('Attendance added:', response.data);
   } catch (error) {
     console.error("Error submitting Attendance data:", error);

@@ -72,35 +72,58 @@ const ClassAddForm = ({ setClass }) => {
           {errors.subject && (
             <p className="text-red-500 text-sm">{errors.subject.message}</p>
           )}
-        </div>
+
 
         {/* Year */}
+
+        </div>
         <div className="mb-4">
           <label className="block mb-1 text-xs font-medium">Year</label>
-          <input
-            type="text"
+          <select
             {...register('year', { required: 'Year is required' })}
-            placeholder="e.g. 1, 2, 3"
-            className="w-full border text-xs border-gray-300 px-3 py-2 rounded"
-          />
-          {errors.year && (
-            <p className="text-red-500 text-sm">{errors.year.message}</p>
+            className="block w-full border p-2 rounded text-sm"
+            defaultValue=""
+          >
+            <option disabled value="">Select a Year</option>
+             <option>1st Year</option>
+             <option>2nd Year</option>
+             <option>3rd Year</option>
+             <option>4th Year</option>
+              
+              
+          </select>
+          {errors.subject && (
+            <p className="text-red-500 text-sm">{errors.subject.message}</p>
           )}
         </div>
+
+       
 
         {/* Semester */}
         <div className="mb-4">
           <label className="block mb-1 text-xs font-medium">Semester</label>
-          <input
-            type="text"
+          <select
             {...register('semester', { required: 'Semester is required' })}
-            placeholder="e.g. 1, 2"
-            className="w-full border text-xs border-gray-300 px-3 py-2 rounded"
-          />
-          {errors.semester && (
-            <p className="text-red-500 text-sm">{errors.semester.message}</p>
+            className="block w-full border p-2 rounded text-sm"
+            defaultValue=""
+          >
+            <option disabled value="">Select a Year</option>
+             <option>1st Semester</option>
+             <option>2nd Semester</option>
+             <option>3rd Semester</option>
+             <option>4th Semester</option>
+             <option>5th Semester</option>
+             <option>6th Semester</option>
+             <option>7th Semester</option>
+             <option>8th Semester</option>
+              
+              
+          </select>
+          {errors.subject && (
+            <p className="text-red-500 text-sm">{errors.subject.message}</p>
           )}
         </div>
+       
 
         {/* Buttons */}
         <div className="flex justify-between">
