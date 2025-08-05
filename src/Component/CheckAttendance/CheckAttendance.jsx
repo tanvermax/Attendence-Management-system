@@ -1,11 +1,15 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../PrivetRoute/AuthContext';
 
 
 
 
 
 export default function CheckAttendance() {
+  const {user} = useAuth();
+
+  console.log(user)
 
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
