@@ -30,7 +30,7 @@ const stufflink = [
 
 const AdminDashboard = () => {
     const { user } = useAuth();
-
+    
     return (
         <div className=' bg-gray-300  w-full'>
             {links.map(({ to, label, icon }) => (

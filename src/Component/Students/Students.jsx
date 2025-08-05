@@ -87,6 +87,7 @@ export default function Students() {
           if (response.data.message) {
             toast.warning(response.data.message)
           }
+          
         })
         .catch(err => {
           console.error('Delete error:', err);
@@ -146,7 +147,7 @@ export default function Students() {
                 {classs.map((course, index) => (
                   <option
                     key={index}
-                    value={`${course.subject}-${course.year}-${course.semester}`}
+                    value={`${course.subject} ${course.year} ${course.semester}`}
                   >
                     {`${course.subject} - Year ${course.year} - Semester ${course.semester}`}
                   </option>

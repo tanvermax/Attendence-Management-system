@@ -3,22 +3,6 @@ import  { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function Faculty() {
-  // const [faculties, setFaculties] = useState([
-  //   {
-  //     id: 1,
-  //     name: 'John Doe',
-  //     email: 'john@example.com',
-  //     contact: '01234567890',
-  //     address: 'Dhaka, Bangladesh',
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'John Doe',
-  //     email: 'john@example.com',
-  //     contact: '01234567890',
-  //     address: 'Dhaka, Bangladesh',
-  //   },
-  // ]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -148,7 +132,8 @@ console.log(id)
       <table className='w-full border text-left'>
         <thead>
           <tr className='bg-gray-200'>
-            <th className='border p-2'>ID</th>
+            <th className='border p-2'></th>
+            <th className='border p-2'>#ID</th>
             <th className='border p-2'>Name</th>
             <th className='border p-2'>Email</th>
             <th className='border p-2'>Contact</th>
@@ -160,6 +145,7 @@ console.log(id)
           {faculty.map((faculty,index) => (
             <tr key={faculty._id}>
               <td className='border p-2'>{index+1}</td>
+              <td className='border p-2'>{index+1001}</td>
               <td className='border p-2'>{faculty.name}</td>
               <td className='border p-2'>{faculty.email}</td>
               <td className='border p-2'>{faculty.contact}</td>

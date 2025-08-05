@@ -54,7 +54,7 @@ export default function ClassPerSubject() {
     fethClasspersub();
   }, []);
 
-  // console.log(classpersub.classes)
+  console.log("data",data)
 
   const classdata = classpersub.classes
   const subjectsdata = classpersub.subjects
@@ -109,6 +109,8 @@ const handleAdd = async (e) => {
     }
     setData(data.filter(entry => entry._id !== id));
   };
+
+  
 
   if (loading) {
     return <div className="p-4">Loading...</div>;
