@@ -50,7 +50,7 @@ export default function CheckAttendance() {
         draggable: true,
         progress: undefined,
         theme: "dark",
-        
+
       });
     } catch (error) {
       console.error("Error submitting Attendance data:", error);
@@ -140,22 +140,22 @@ export default function CheckAttendance() {
                         <td className="p-2 border text-center">{student.sid}</td>
                         <td className="p-2 border">{student.name}</td>
                         <td className="p-2 border text-center">
-  <div className="flex gap-3 justify-center text-xs">
-    {["Present", "Absent", "Late"].map(status => (
-      <label key={status} className="flex items-center gap-1 cursor-pointer">
-        <input
-          type="radio"
-          name={student._id}
-          value={status}
-          checked={attendance[student._id] === status}
-          onChange={() => handleAttendanceChange(student._id, status)}
-          className="h-3 w-3"
-        />
-        {status[0]}
-      </label>
-    ))}
-  </div>
-</td>
+                          <div className="flex gap-3 justify-center text-xs">
+                            {["Present", "Absent", "Late"].map(status => (
+                              <label key={status} className="flex items-center gap-1 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name={student._id}
+                                  value={status}
+                                  checked={attendance[student._id] === status}
+                                  onChange={() => handleAttendanceChange(student._id, status)}
+                                  className="h-3 w-3"
+                                />
+                                {status[0]}
+                              </label>
+                            ))}
+                          </div>
+                        </td>
 
 
                       </tr>
