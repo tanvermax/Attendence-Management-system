@@ -3,9 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function ClassPerSubject() {
-  // const [entries, setEntries] = useState([
-  //   { id: 1, class: 'BBA 1st Year', subject: 'Marketing Basics', faculty: 'John Doe' }
-  // ]);
+  const [editingId, setEditingId] = useState(null);
+
   const [data, setData] = useState([]);
   const [classpersub, setClasspersub] = useState({
     classes: [],
@@ -34,11 +33,11 @@ export default function ClassPerSubject() {
     fethCourse();
   }, []);
 
-    const fethClasspersub = async () => {
+  const fethClasspersub = async () => {
     try {
       axios.get("http://localhost:5000/new-classpersubject")
         .then(response => {
-          console.log("new-classpersubject",response.data);
+          console.log("new-classpersubject", response.data);
           setData(response.data);
 
         })
@@ -54,7 +53,16 @@ export default function ClassPerSubject() {
     fethClasspersub();
   }, []);
 
-  console.log("data",data)
+  // console.log("data",data)
+  const startEdit = (entry) => {
+    setEditingId(entry._id);
+    setFormData({
+      class: entry.class,
+      subject: entry.subject,
+      faculty: entry.faculty,
+    });
+    setIsFormVisible(true);
+  };
 
   const classdata = classpersub.classes
   const subjectsdata = classpersub.subjects
@@ -77,23 +85,46 @@ export default function ClassPerSubject() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-const handleAdd = async (e) => {
-  e.preventDefault();
-  try {
-    const response = await axios.post("http://localhost:5000/new-classpersubject", formData);
-    console.log('Class added:', response.data);
-    setData(prev => [...prev, response.data]);
-    toast.success("submited class data")
-    setIsFormVisible(false);
-    setFormData({ class: '', subject: '', faculty: '' });
-  } catch (error) {
-    console.error("Error submitting class data:", error);
-  }
-};
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("http://localhost:5000/new-classpersubject", formData);
+      console.log('Class added:', response.data);
+      setData(prev => [...prev, response.data]);
+      toast.success("submited class data")
+      setIsFormVisible(false);
+      setFormData({ class: '', subject: '', faculty: '' });
+    } catch (error) {
+      console.error("Error submitting class data:", error);
+    }
+  };
 
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`http://localhost:5000/new-classpersubject/${editingId}`, formData);
+      console.log("Updated:", response.data);
+
+      toast.success("Updated successfully!");
+
+      // Update local state
+      setData(prev =>
+        prev.map(item => item._id === editingId ? response.data : item)
+      );
+
+      // Reset UI
+      setEditingId(null);
+      setFormData({ class: '', subject: '', faculty: '' });
+      setIsFormVisible(false);
+
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("Failed to update");
+    }
+  };
 
   const handleDelete = (id) => {
-     if (window.confirm('Are you sure you want to delete this class?')) {
+    if (window.confirm('Are you sure you want to delete this class?')) {
       console.log(id);
       axios.delete(`http://localhost:5000/new-classpersubject/${id}`)
         .then(response => {
@@ -110,7 +141,7 @@ const handleAdd = async (e) => {
     setData(data.filter(entry => entry._id !== id));
   };
 
-  
+
 
   if (loading) {
     return <div className="p-4">Loading...</div>;
@@ -120,15 +151,21 @@ const handleAdd = async (e) => {
   return (
     <div className='p-4'>
       <h2 className='text-xl font-semibold mb-4'>Class per Subject</h2>
-      <button
-        onClick={() => setIsFormVisible(!isFormVisible)}
-        className='mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600'
-      >
-        {isFormVisible ? 'Cancel' : 'New Entry'}
-      </button>
+     <button
+  onClick={() => {
+    setIsFormVisible(!isFormVisible);
+    setEditingId(null);
+    setFormData({ class: '', subject: '', faculty: '' });
+  }}
+  className='mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600'
+>
+  {editingId ? 'Cancel Edit' : isFormVisible ? 'Cancel' : 'New Entry'}
+</button>
+
 
       {isFormVisible && (
-        <form onSubmit={handleAdd} className='mb-6 space-y-4'>
+        <form onSubmit={editingId ? handleUpdate : handleAdd} className='mb-6 space-y-4'>
+
           <select
             name='class'
             value={formData.class}
@@ -138,7 +175,7 @@ const handleAdd = async (e) => {
           >
             <option value=''>Select a Class</option>
             {classpersub.classes?.map((data, index) => (
-              <option key={index} value={`${data.subject} ${ data.year}${data.semester}`}>
+              <option key={index} value={`${data.subject} ${data.year}${data.semester}`}>
                 {data.subject} {data.year} {data.semester}
               </option>
             ))}
@@ -175,11 +212,12 @@ const handleAdd = async (e) => {
           </select>
 
           <button
-            type='submit'
-            className='bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600'
-          >
-            Submit
-          </button>
+  type='submit'
+  className='bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600'
+>
+  {editingId ? "Update" : "Submit"}
+</button>
+
         </form>
       )}
 
@@ -196,14 +234,18 @@ const handleAdd = async (e) => {
         <tbody>
           {data.map((entry, index) => (
             <tr key={entry._id}>
-              <td className='border p-2'>{index}</td>
+              <td className='border p-2'>{index+1}</td>
               <td className='border p-2'>{entry.class}</td>
               <td className='border p-2'>{entry.subject}</td>
               <td className='border p-2'>{entry.faculty}</td>
               <td className='border p-2 space-x-2'>
-                <button className='bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600'>
+                <button
+                  className='bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600'
+                  onClick={() => startEdit(entry)}
+                >
                   Edit
                 </button>
+
                 <button
                   onClick={() => handleDelete(entry._id)}
                   className='bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600'

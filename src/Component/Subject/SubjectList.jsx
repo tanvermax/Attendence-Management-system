@@ -1,50 +1,72 @@
-import axios from 'axios';
-import React, {  useState } from 'react';
-import { toast } from 'react-toastify';
+import axios from "axios";
+import React, { useState } from "react";
+import { toast } from "react-toastify";
 
-// const initialSubjects = [
-//   { id: 1, name: '' },
-//   { id: 2, name: 'Physics' },
-//   { id: 3, name: 'Chemistry' },
-//   { id: 4, name: 'Biology' },
-// ];
+export default function SubjectList({ subject, setSubject }) {
+  const [searchTerm, setSearchTerm] = useState("");
 
-export default function SubjectList({subject,setSubject}) {
-  // const [subjects, setSubjects] = useState(initialSubjects);
-  const [searchTerm, setSearchTerm] = useState('');
- 
+  // Editing State
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+
   // Filter subjects by search term
-  const filteredSubjects = subject.filter(subject =>
-    subject.subject.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSubjects = subject.filter((item) =>
+    item.subject.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-
+  // Delete
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this subject?')) {
-      console.log(id)
-       axios.delete(`http://localhost:5000/subject/${id}`)
-      .then(response => {
-               console.log(response.data);
-               if (response.data.message) {
-                 toast.warning(response.data.message)
-               }
-             })
-              .catch(err => {
-        console.error('Delete error:', err);
+    if (!window.confirm("Are you sure you want to delete this subject?")) return;
+
+    axios
+      .delete(`http://localhost:5000/subject/${id}`)
+      .then((response) => {
+        if (response.data.message) {
+          toast.warning(response.data.message);
+        }
+
+        setSubject(subject.filter((item) => item._id !== id));
+      })
+      .catch((err) => {
+        console.error("Delete error:", err);
         toast.error("Failed to delete subject.");
       });
-      setSubject(subject.filter(subject => subject._id !== id));
-    }
   };
 
-  const handleEdit = (id) => {
-    alert(`Edit subject with id: ${id}`);
-    // You can open modal or navigate to edit page here
+  // Open edit modal
+  const handleEdit = (item) => {
+    setEditingId(item._id);
+    setEditName(item.subject);
+    setEditDescription(item.description || "");
   };
 
-  const handleSearch = (e) => {
+  // Save updated data
+  const handleUpdate = async (e) => {
     e.preventDefault();
-    // The filtering is live on input change, so no extra action needed here
+
+    try {
+      await axios.put(`http://localhost:5000/subject/${editingId}`, {
+        subject: editName,
+        description: editDescription,
+      });
+
+      toast.success("Subject updated successfully!");
+
+      // update UI instantly
+      setSubject((prev) =>
+        prev.map((item) =>
+          item._id === editingId
+            ? { ...item, subject: editName, description: editDescription }
+            : item
+        )
+      );
+
+      setEditingId(null);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update subject");
+    }
   };
 
   return (
@@ -52,7 +74,7 @@ export default function SubjectList({subject,setSubject}) {
       <h2 className="text-2xl font-semibold mb-4">Subject List</h2>
 
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex mb-6">
+      <form onSubmit={(e) => e.preventDefault()} className="flex mb-6">
         <input
           type="text"
           placeholder="Search subjects"
@@ -80,30 +102,29 @@ export default function SubjectList({subject,setSubject}) {
         <tbody>
           {filteredSubjects.length === 0 ? (
             <tr>
-              <td colSpan="2" className="text-center py-4 text-gray-500">
+              <td colSpan="3" className="text-center py-4 text-gray-500">
                 No subjects found.
               </td>
             </tr>
           ) : (
-            filteredSubjects.map(({ _id, subject,description },index) => (
-              <tr key={_id} className="hover:bg-gray-50">
-                <td className="border px-4 py-2">{index+1}</td>
+            filteredSubjects.map((item, index) => (
+              <tr key={item._id} className="hover:bg-gray-50">
+                <td className="border px-4 py-2">{index + 1}</td>
 
                 <td className="border px-4 py-2">
-                  <p>
-                    {subject}
-                  </p>
-                  <p className='text-[10px]'>{description}</p>
+                  <p>{item.subject}</p>
+                  <p className="text-[10px] text-gray-500">{item.description}</p>
                 </td>
+
                 <td className="border px-4 py-2 text-center space-x-2">
                   <button
-                    onClick={() => handleEdit(_id)}
+                    onClick={() => handleEdit(item)}
                     className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(_id)}
+                    onClick={() => handleDelete(item._id)}
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                   >
                     Delete
@@ -114,6 +135,52 @@ export default function SubjectList({subject,setSubject}) {
           )}
         </tbody>
       </table>
+
+      {/* EDIT MODAL */}
+      {editingId && (
+        <div className="fixed inset-0 backdrop-blur-md bg-opacity-50 flex items-center justify-center">
+
+          <form
+            onSubmit={handleUpdate}
+            className="bg-white w-[400px] p-6 rounded shadow"
+          >
+            <h2 className="text-xl font-semibold mb-4">Edit Subject</h2>
+
+            {/* Subject */}
+            <label className="block text-sm font-medium mb-1">Subject</label>
+            <input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="border w-full px-3 py-2 mb-3 rounded"
+            />
+
+            {/* Description */}
+            <label className="block text-sm font-medium mb-1">Description</label>
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              className="border w-full px-3 py-2 mb-4 rounded"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingId(null)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,89 +1,135 @@
 import axios from 'axios';
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function Faculty() {
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     contact: '',
     address: '',
   });
-   const [faculty,setfaculty] = useState([]);
 
-  const fethCourse = async () => {
+  const [faculty, setFaculty] = useState([]);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+
+  // Edit State
+  const [editId, setEditId] = useState(null);
+
+  const fetchCourse = async () => {
     try {
-      axios.get("http://localhost:5000/faculty")
-        .then(response => {
-          console.log(response.data);
-          setfaculty(response.data);
-
-        })
+      const response = await axios.get("http://localhost:5000/faculty");
+      setFaculty(response.data);
     } catch (error) {
       console.error('Error fetching courses:', error);
     }
-  }
+  };
 
   useEffect(() => {
-    fethCourse();
+    fetchCourse();
   }, []);
 
-  const [isFormVisible, setIsFormVisible] = useState(false);
-
+  // Input change handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddFaculty =async (e) => {
+  // Add new faculty
+  const handleAddFaculty = async (e) => {
     e.preventDefault();
-    setFormData({ name: '', email: '', contact: '', address: '' });
-    console.log(formData)
+
     try {
       const response = await axios.post('http://localhost:5000/faculty', formData);
 
-      console.log('Class added:', response.data);
-      setfaculty(prev => [...prev, response.data]);
+      setFaculty(prev => [...prev, response.data]);
+      toast.success('Faculty added successfully!');
+      setFormData({ name: '', email: '', contact: '', address: '' });
+      setIsFormVisible(false);
 
-      toast.success('Class added successfully!');
     } catch (error) {
-      console.error('Error adding class:', error);
-      toast.error('Failed to add class');
+      console.error('Error adding faculty:', error);
+      toast.error('Failed to add faculty');
     }
-    setIsFormVisible(false);
   };
 
+  // Delete faculty
   const handleDelete = (id) => {
-console.log(id)
-     axios.delete(`http://localhost:5000/faculty/${id}`)
-        .then(response => {
-          console.log(response.data);
-          if (response.data.message) {
-            toast.warning(response.data.message)
-          }
-        })
-        .catch(err => {
-          console.error('Delete error:', err);
-          toast.error("Failed to delfacultyete class.");
-        });
-    const updated = faculty.filter(faculty => faculty._id !== id);
+    if (!window.confirm("Are you sure?")) return;
 
-    setfaculty(updated);
+    axios.delete(`http://localhost:5000/faculty/${id}`)
+      .then(() => {
+        toast.warning("Faculty deleted");
+        setFaculty(faculty.filter(item => item._id !== id));
+      })
+      .catch(err => {
+        console.error(err);
+        toast.error("Failed to delete faculty");
+      });
+  };
+
+  // OPEN EDIT FORM
+  const handleEdit = (faculty) => {
+    setEditId(faculty._id);
+    setFormData({
+      name: faculty.name,
+      email: faculty.email,
+      contact: faculty.contact,
+      address: faculty.address,
+    });
+
+    setIsFormVisible(true);
+  };
+
+  // UPDATE(existing faculty)
+  const handleUpdateFaculty = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.put(
+        `http://localhost:5000/faculty/${editId}`,
+        formData
+      );
+console.log(response)
+      toast.success("Faculty updated successfully!");
+
+      // Update UI instantly
+      setFaculty(prev =>
+        prev.map(item =>
+          item._id === editId ?
+            { ...item, ...formData } :
+            item
+        )
+      );
+
+      // Reset
+      setEditId(null);
+      setIsFormVisible(false);
+      setFormData({ name: '', email: '', contact: '', address: '' });
+
+    } catch (error) {
+      console.error('Error updating faculty:', error);
+      toast.error("Failed to update faculty");
+    }
   };
 
   return (
     <div className='p-4'>
       <h2 className='text-xl font-semibold mb-4'>Faculty</h2>
+
       <button
-        onClick={() => setIsFormVisible(!isFormVisible)}
+        onClick={() => {
+          setIsFormVisible(!isFormVisible);
+          setEditId(null);
+          setFormData({ name: '', email: '', contact: '', address: '' });
+        }}
         className='mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600'
       >
         {isFormVisible ? 'Cancel' : 'Add New Faculty'}
       </button>
 
       {isFormVisible && (
-        <form onSubmit={handleAddFaculty} className='mb-6 space-y-4'>
+        <form onSubmit={editId ? handleUpdateFaculty : handleAddFaculty} className='mb-6 space-y-4'>
           <input
             type='text'
             name='name'
@@ -120,16 +166,17 @@ console.log(id)
             className='block w-full border p-2 rounded'
             required
           />
+
           <button
             type='submit'
-            className='bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600'
+            className={`${editId ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'} text-white px-4 py-2 rounded`}
           >
-            Submit
+            {editId ? 'Update Faculty' : 'Submit'}
           </button>
         </form>
       )}
 
-      <table className='w-full border text-left'>
+      <table className='w-full border text-left text-sm'>
         <thead>
           <tr className='bg-gray-200'>
             <th className='border p-2'></th>
@@ -142,20 +189,23 @@ console.log(id)
           </tr>
         </thead>
         <tbody>
-          {faculty.map((faculty,index) => (
-            <tr key={faculty._id}>
-              <td className='border p-2'>{index+1}</td>
-              <td className='border p-2'>{index+1001}</td>
-              <td className='border p-2'>{faculty.name}</td>
-              <td className='border p-2'>{faculty.email}</td>
-              <td className='border p-2'>{faculty.contact}</td>
-              <td className='border p-2'>{faculty.address}</td>
+          {faculty.map((person, index) => (
+            <tr key={person._id}>
+              <td className='border p-2'>{index + 1}</td>
+              <td className='border p-2'>{index + 1001}</td>
+              <td className='border p-2'>{person.name}</td>
+              <td className='border p-2'>{person.email}</td>
+              <td className='border p-2'>{person.contact}</td>
+              <td className='border p-2'>{person.address}</td>
               <td className='border p-2 space-x-2'>
-                <button className='bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600'>
+                <button
+                  onClick={() => handleEdit(person)}
+                  className='bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600'
+                >
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(faculty._id)}
+                  onClick={() => handleDelete(person._id)}
                   className='bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600'
                 >
                   Delete

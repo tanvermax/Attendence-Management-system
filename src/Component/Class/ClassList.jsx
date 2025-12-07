@@ -7,6 +7,8 @@ export default function ClassList({ classes, setClass }) {
   // const [classes, setClasses] = useState(fakeClasses);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [editData, setEditData] = useState(null); // store selected class data
+  const [isEditing, setIsEditing] = useState(false);
 
 
   const filteredClasses = classes.filter(cls =>
@@ -32,8 +34,28 @@ export default function ClassList({ classes, setClass }) {
   };
 
   const handleEdit = (id) => {
-    alert(`Edit class with id: ${id}`);
-    // You can add modal or navigation to edit page here
+    const cls = classes.find(c => c._id === id);
+    setEditData(cls);
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    axios.put(`http://localhost:5000/class/${editData._id}`, editData)
+      .then(res => {
+        console.log(res)
+        toast.success("Class updated!");
+
+        // Update state
+        const updated = classes.map(c =>
+          c._id === editData._id ? editData : c
+        );
+        setClass(updated);
+        setIsEditing(false);
+      })
+      .catch(err => {
+        console.error(err);
+        toast.error("Failed to update class");
+      });
   };
 
   return (
@@ -58,7 +80,7 @@ export default function ClassList({ classes, setClass }) {
               className="flex items-center justify-between border rounded px-4 py-3 hover:bg-gray-50"
             >
               <span className="text-xs font-medium">
-                {subject} {year}  {semester} 
+                {subject} {year}  {semester}
               </span>
               <div className="space-x-2">
                 <button
@@ -78,6 +100,54 @@ export default function ClassList({ classes, setClass }) {
           ))}
         </ul>
       )}
+      {isEditing && (
+        <div className="fixed inset-0 backdrop-blur-md bg-opacity-40 flex justify-center items-center">
+          <div className="bg-white p-6 rounded shadow-lg w-96">
+            <h3 className="text-lg font-semibold mb-4">Edit Class</h3>
+
+            <input
+              type="text"
+              value={editData.subject}
+              onChange={e => setEditData({ ...editData, subject: e.target.value })}
+              className="w-full mb-3 border px-3 py-2 rounded"
+              placeholder="Subject"
+            />
+
+            <input
+              type="text"
+              value={editData.year}
+              onChange={e => setEditData({ ...editData, year: e.target.value })}
+              className="w-full mb-3 border px-3 py-2 rounded"
+              placeholder="Year"
+            />
+
+            <input
+              type="text"
+              value={editData.semester}
+              onChange={e => setEditData({ ...editData, semester: e.target.value })}
+              className="w-full mb-5 border px-3 py-2 rounded"
+              placeholder="Semester"
+            />
+
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="bg-gray-500 text-white px-3 py-1 rounded"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSave}
+                className="bg-blue-600 text-white px-3 py-1 rounded"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -1,100 +1,115 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function Students() {
   const [student, setStudent] = useState([]);
-
   const [classs, setClasss] = useState([]);
 
-  const fethCourse3 = async () => {
-    try {
-      axios.get("http://localhost:5000/class")
-        .then(response => {
-          console.log(response.data);
-          setClasss(response.data);
-
-        })
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-    }
-  }
-
+  // Fetch classes
   useEffect(() => {
-    fethCourse3();
+    axios
+      .get("http://localhost:5000/class")
+      .then((res) => setClasss(res.data))
+      .catch((err) => console.error(err));
   }, []);
 
-  const fethCourse = async () => {
-    try {
-      axios.get("http://localhost:5000/student")
-        .then(response => {
-          console.log(response.data);
-          setStudent(response.data);
-
-        })
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-    }
-  }
-
+  // Fetch students
   useEffect(() => {
-    fethCourse();
+    axios
+      .get("http://localhost:5000/student")
+      .then((res) => setStudent(res.data))
+      .catch((err) => console.error(err));
   }, []);
-
 
   const [formOpen, setFormOpen] = useState(false);
-  const [formData, setFormData] = useState({ sid: '', name: '', subject: '', year: '' });
   const [editingId, setEditingId] = useState(null);
 
+  const [formData, setFormData] = useState({
+    sid: "",
+    name: "",
+    class: "",
+  });
+
+  // Handle input change
   const handleInput = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
+  // Submit handler (Add / Edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
 
+    // validation
+    if (!formData.sid || !formData.name || !formData.class) {
+      toast.error("All fields are required!");
+      return;
+    }
+
+    // ---------------- EDIT MODE ----------------
+    if (editingId) {
+      try {
+        await axios.put(`http://localhost:5000/student/${editingId}`,
+          formData
+        );
+
+        setStudent((prev) =>
+          prev.map((s) => (s._id === editingId ? { ...s, ...formData } : s))
+        );
+
+        toast.success("Student updated successfully!");
+
+        setEditingId(null);
+        setFormOpen(false);
+        setFormData({ sid: "", name: "", class: "" });
+        return;
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to update student");
+      }
+    }
+
+    // ---------------- ADD MODE ----------------
     try {
-      const response = await axios.post('http://localhost:5000/student', formData);
+      const res = await axios.post("http://localhost:5000/student", formData);
 
-      console.log('Student added:', response.data);
-      toast.success('Student added successfully!');
+      setStudent((prev) => [...prev, res.data]);
+      toast.success("Student added successfully!");
 
-      // 👇 Add the newly added student to state
-      setStudent(prev => [...prev, response.data]);
-
-      // Clear form and close
-      // setFormData({ sid: '', name: '', subject: '', year: '' });
-      // setFormOpen(false);
+      setFormData({ sid: "", name: "", class: "" });
+      setFormOpen(false);
     } catch (error) {
-      console.error('Error adding student:', error);
-      toast.error('Failed to add student');
+      console.error(error);
+      toast.error("Failed to add student");
     }
   };
 
-  const handleEdit = (student) => {
-    setFormData(student);
-    setEditingId(student.id);
+  // Set form data for edit
+  const handleEdit = (s) => {
+    setFormData({
+      sid: s.sid,
+      name: s.name,
+      class: s.class,
+    });
+
+    setEditingId(s._id);
     setFormOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (confirm("Are you sure to delete?")) {
-      axios.delete(`http://localhost:5000/student/${id}`)
-        .then(response => {
-          console.log(response.data);
-          if (response.data.message) {
-            toast.warning(response.data.message)
-          }
-          
-        })
-        .catch(err => {
-          console.error('Delete error:', err);
-          toast.error("Failed to delete student class.");
-        });
+  // Delete student
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure to delete?")) return;
 
-      setStudent(prev => prev.filter(s => s._id !== id));
+    try {
+      await axios.delete(`http://localhost:5000/student/${id}`);
+
+      setStudent((prev) => prev.filter((s) => s._id !== id));
+
+      toast.success("Student deleted successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete student");
     }
   };
 
@@ -106,13 +121,14 @@ export default function Students() {
         className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
         onClick={() => {
           setFormOpen(!formOpen);
-          setFormData({ id: '', name: '', class: '' });
           setEditingId(null);
+          setFormData({ sid: "", name: "", class: "" });
         }}
       >
-        {formOpen ? 'Close Form' : 'Add Student +'}
+        {formOpen ? "Close Form" : "Add Student +"}
       </button>
 
+      {/* FORM */}
       {formOpen && (
         <form onSubmit={handleSubmit} className="bg-gray-100 p-4 rounded mb-6 space-y-4">
           <div className="flex gap-4">
@@ -125,6 +141,7 @@ export default function Students() {
               className="w-1/3 px-3 py-2 border rounded"
               required
             />
+
             <input
               type="text"
               name="name"
@@ -134,37 +151,38 @@ export default function Students() {
               className="w-1/3 px-3 py-2 border rounded"
               required
             />
-            <div className="mb-4 w-1/3">
-              <label className="block mb-1 text-xs font-medium">Subject</label>
+
+            <div className="w-1/3">
               <select
                 name="class"
                 value={formData.class}
                 onChange={handleInput}
-                className="block w-full border p-2 rounded text-sm"
+                className="w-full px-2 py-2 border rounded"
                 required
               >
-                <option value="">Select a class</option>
-                {classs.map((course, index) => (
+                <option value="">Select Class</option>
+                {classs.map((c, i) => (
                   <option
-                    key={index}
-                    value={`${course.subject} ${course.year} ${course.semester}`}
+                    key={i}
+                    value={`${c.subject} ${c.year} ${c.semester}`}
                   >
-                    {`${course.subject} - Year ${course.year} - Semester ${course.semester}`}
+                    {`${c.subject} - Year ${c.year} - Sem ${c.semester}`}
                   </option>
                 ))}
               </select>
             </div>
-
           </div>
+
           <button
             type="submit"
             className="bg-green-600 text-white px-4 py-2 rounded"
           >
-            {editingId ? 'Update Student' : 'Add Student'}
+            {editingId ? "Update Student" : "Add Student"}
           </button>
         </form>
       )}
 
+      {/* TABLE */}
       <table className="w-full text-left border">
         <thead>
           <tr className="bg-gray-200">
@@ -175,10 +193,11 @@ export default function Students() {
             <th className="p-2">Actions</th>
           </tr>
         </thead>
+
         <tbody>
-          {student.map((stu, index) => (
+          {student.map((stu, i) => (
             <tr key={stu._id} className="border-t hover:bg-gray-50">
-              <td className="p-2">{index + 1}</td>
+              <td className="p-2">{i + 1}</td>
               <td className="p-2">{stu.sid}</td>
               <td className="p-2">{stu.name}</td>
               <td className="p-2">{stu.class}</td>
@@ -189,6 +208,7 @@ export default function Students() {
                 >
                   Edit
                 </button>
+
                 <button
                   onClick={() => handleDelete(stu._id)}
                   className="bg-red-500 text-white px-3 py-1 rounded"
@@ -198,6 +218,7 @@ export default function Students() {
               </td>
             </tr>
           ))}
+
           {student.length === 0 && (
             <tr>
               <td colSpan="5" className="text-center text-gray-500 p-4">

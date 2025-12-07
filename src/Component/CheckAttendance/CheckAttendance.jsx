@@ -1,35 +1,22 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../PrivetRoute/AuthContext';
-
-
-
-
+import { toast } from 'react-toastify';
+// import { useAuth } from '../../PrivetRoute/AuthContext';
 
 export default function CheckAttendance() {
-  const {user} = useAuth();
-
-  console.log(user)
 
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
-  const [attendance, setAttendance] = useState({}); // { studentId: 'Present' | 'Absent' | 'Late' }
-
+  const [attendance, setAttendance] = useState({});
   const [classpersubList, setClasspersubList] = useState([]);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fethClasspersub = async () => {
+  const fetchClasspersub = async () => {
     try {
       const response = await axios.get("http://localhost:5000/check-atttendence");
-      console.log("response", response.data);
-
-      // Check what comes from backend — ideally an array of classpersub
-      const classpersubArray = response.data.data.classpersub; // MUST be an array
-      const studentsArray = response.data.data.student;
-
-      setClasspersubList(classpersubArray);
-      setData(studentsArray);
+      setClasspersubList(response.data.data.classpersub);
+      setData(response.data.data.student);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -37,124 +24,162 @@ export default function CheckAttendance() {
     }
   };
 
-
-
   useEffect(() => {
-    fethClasspersub();
+    fetchClasspersub();
   }, []);
-
-  console.log("data", data)
-  if (loading) {
-    return (<><p>loading....</p></>)
-  }
-
-  console.log(classpersubList)
-  console.log(data)
-
 
   const handleAttendanceChange = (studentId, status) => {
     setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
 
-  const handleSubmit =async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Attendance saved:', { date: selectedDate, classname: selectedClass, attendance });
     try {
-    const response = await axios.post("http://localhost:5000/attendance",{ date: selectedDate, classname: selectedClass, attendance })
-    console.log('Attendance added:', response.data);
-  } catch (error) {
-    console.error("Error submitting Attendance data:", error);
-  }
-    alert('Attendance submitted successfully!');
+      const response = await axios.post("http://localhost:5000/attendance", {
+        date: selectedDate,
+        classname: selectedClass,
+        attendance
+      });
+      console.log('Attendance added:', response.data);
+      toast.success('Attendance submitted successfully!', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        
+      });
+    } catch (error) {
+      console.error("Error submitting Attendance data:", error);
+    }
   };
-console.log("selectedClassId",selectedClass
 
-)
+  const filteredStudents = data.filter(student => student.class === selectedClass);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[300px] text-gray-600">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 text-xs">
-      <h2 className="text-xl font-semibold mb-4">Check Attendance</h2>
+    <div className="max-w-4xl mx-auto p-6 space-y-6 text-sm">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">Attendance Panel</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4 mb-6">
-        <div>
-          <label className="block mb-1 font-medium">Select Class per Subject:</label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+
+        {/* Select Class */}
+        <div className="bg-white shadow-sm rounded-xl p-4 border">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Choose Class
+          </label>
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
             required
           >
-            <option value="">-- Select --</option>
+            <option value="">-- Select class --</option>
             {classpersubList.map(cls => (
-              <option key={cls._id} value={`${cls.class}`}>
+              <option key={cls._id} value={cls.class}>
                 {cls.class} - {cls.subject} ({cls.faculty})
               </option>
             ))}
           </select>
-
         </div>
 
-        <div>
-          <label className="block mb-1 font-medium">Date:</label>
+        {/* Select Date */}
+        <div className="bg-white shadow-sm rounded-xl p-4 border">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Date
+          </label>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-400"
             required
           />
         </div>
 
+        {/* Student Table */}
         {selectedClass && (
-          <div className="mt-4">
-            <h3 className="font-semibold mb-2">Student List</h3>
-            <table className="w-full border text-left">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">ID</th>
-                  <th className="border p-2">Name</th>
-                  <th className="border p-2">Attendance</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="bg-white shadow-sm rounded-xl p-4 border">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-semibold text-gray-700">
+                Student Attendance
+              </h3>
+              <span className="text-xs text-gray-500">
+                Total: {filteredStudents.length}
+              </span>
+            </div>
 
-
-                {data
-                  .filter(student => student.class === selectedClass)
-                  .map(student => (
-                    <tr key={student._id}>
-                      <td className="border p-2">{student.sid}</td>
-                      <td className="border p-2">{student.name}</td>
-                      <td className="border p-2">
-                        <select
-                          value={attendance[student._id] || ''}
-                          onChange={(e) => handleAttendanceChange(student._id, e.target.value)}
-                          className="border p-1 rounded"
-                          required
-                        >
-                          <option value="">-- Select --</option>
-                          <option value="Present">Present</option>
-                          <option value="Absent">Absent</option>
-                          <option value="Late">Late</option>
-                        </select>
-                      </td>
+            {filteredStudents.length === 0 ? (
+              <p className="text-center text-gray-500 py-6">
+                No students found for this class.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border border-gray-200 rounded-lg">
+                  <thead className="bg-gray-100 text-gray-700">
+                    <tr>
+                      <th className="p-2 border">ID</th>
+                      <th className="p-2 border">Name</th>
+                      <th className="p-2 border">Status</th>
                     </tr>
-                  ))}
+                  </thead>
+
+                  <tbody>
+                    {filteredStudents.map(student => (
+                      <tr key={student._id} className="hover:bg-gray-50">
+                        <td className="p-2 border text-center">{student.sid}</td>
+                        <td className="p-2 border">{student.name}</td>
+                        <td className="p-2 border text-center">
+  <div className="flex gap-3 justify-center text-xs">
+    {["Present", "Absent", "Late"].map(status => (
+      <label key={status} className="flex items-center gap-1 cursor-pointer">
+        <input
+          type="radio"
+          name={student._id}
+          value={status}
+          checked={attendance[student._id] === status}
+          onChange={() => handleAttendanceChange(student._id, status)}
+          className="h-3 w-3"
+        />
+        {status[0]}
+      </label>
+    ))}
+  </div>
+</td>
 
 
+                      </tr>
+                    ))}
+                  </tbody>
 
-              </tbody>
-            </table>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
+        {/* Submit Button */}
         {selectedClass && (
-          <button
-            type="submit"
-            className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-          >
-            Submit Attendance
-          </button>
+          <div className="sticky bottom-2 mt-4">
+            <button
+              type="submit"
+              className="w-full py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-200"
+            >
+              Save Attendance
+            </button>
+          </div>
         )}
+
       </form>
     </div>
   );
