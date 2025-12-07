@@ -9,7 +9,7 @@ export default function AttendanceRecord() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [studentData, setStudentData] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
-
+console.log(attendanceData)
   useEffect(() => {
     axios
       .get("http://localhost:5000/attendance")
@@ -20,37 +20,38 @@ export default function AttendanceRecord() {
       .catch((err) => console.error("Error fetching attendance:", err));
   }, []);
 
-  const handleCheck = () => {
-    if (!selectedClass || !selectedDate) return;
+ const handleCheck = () => {
+  if (!selectedClass || !selectedDate) return;
 
-    const formattedDate = new Date(selectedDate).toISOString().split("T")[0];
+  const selected = new Date(selectedDate).toDateString(); // e.g. "Sun Dec 07 2025"
 
-    const matchedRecord = attendanceData.find(
-      (record) =>
-        record.classname === selectedClass && record.date === formattedDate
-    );
+  const matchedRecord = attendanceData.find(
+    (record) =>
+      record.classname === selectedClass &&
+      new Date(record.date).toDateString() === selected
+  );
 
-    if (!matchedRecord) {
-      setFilteredStudents([]);
-      setShowData(true);
-      return;
-    }
-
-    const attendanceMap = matchedRecord.attendance;
-
-    const result = Object.entries(attendanceMap).map(([id, status]) => {
-      const student = studentData.find((s) => s._id === id);
-      return {
-        id,
-        sid: student?.sid || "Unknown ID",
-        name: student?.name || "Unknown Name",
-        attendance: status,
-      };
-    });
-
-    setFilteredStudents(result);
+  if (!matchedRecord) {
+    setFilteredStudents([]);
     setShowData(true);
-  };
+    return;
+  }
+
+  const attendanceMap = matchedRecord.attendance;
+
+  const result = Object.entries(attendanceMap).map(([id, status]) => {
+    const student = studentData.find((s) => s._id === id);
+    return {
+      id,
+      sid: student?.sid || "Unknown ID",
+      name: student?.name || "Unknown Name",
+      attendance: status,
+    };
+  });
+
+  setFilteredStudents(result);
+  setShowData(true);
+};
 
   // Better Print Logic
   const handlePrint = () => {
